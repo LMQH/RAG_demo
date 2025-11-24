@@ -1,0 +1,262 @@
+{
+	"info": {
+		"_postman_id": "rag-demo-api-collection",
+		"name": "RAG Demo API",
+		"description": "RAG Demo 后端 API 接口集合",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "基础接口",
+			"item": [
+				{
+					"name": "根路径",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"],
+							"path": [""]
+						}
+					}
+				},
+				{
+					"name": "健康检查",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "文档管理",
+			"item": [
+				{
+					"name": "上传文档",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/upload",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "upload"]
+						}
+					}
+				},
+				{
+					"name": "获取文档列表",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/documents?version=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "documents"],
+							"query": [
+								{
+									"key": "version",
+									"value": "",
+									"description": "版本号（可选）",
+									"disabled": true
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "删除文档",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/documents/:document_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "documents", ":document_id"],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "文档ID"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "知识库管理",
+			"item": [
+				{
+					"name": "重建知识库",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/knowledge-base/rebuild?path=uploads",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "knowledge-base", "rebuild"],
+							"query": [
+								{
+									"key": "path",
+									"value": "uploads",
+									"description": "要重建的目录路径"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "获取版本历史",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/version-history",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "version-history"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "状态监听",
+			"item": [
+				{
+					"name": "监听上传状态",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/upload/status/:version",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "upload", "status", ":version"],
+							"variable": [
+								{
+									"key": "version",
+									"value": "1",
+									"description": "版本号"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "监听重建状态",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/knowledge-base/rebuild/status?version=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "knowledge-base", "rebuild", "status"],
+							"query": [
+								{
+									"key": "version",
+									"value": "",
+									"description": "预期版本号（可选）",
+									"disabled": true
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "聊天接口",
+			"item": [
+				{
+					"name": "流式对话",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"test_user_001\",\n  \"message\": \"你好，请介绍一下这个系统\",\n  \"conversation_id\": null,\n  \"scenario\": null\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat/stream",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "stream"]
+						}
+					}
+				},
+				{
+					"name": "获取用户对话列表",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat/conversations/:user_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "conversations", ":user_id"],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "test_user_001",
+									"description": "用户ID"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "获取对话消息列表",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat/messages/:conversation_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat", "messages", ":conversation_id"],
+							"variable": [
+								{
+									"key": "conversation_id",
+									"value": "1",
+									"description": "对话ID"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}
+

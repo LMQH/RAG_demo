@@ -1,0 +1,45 @@
+# Web框架 - Python 3.12 兼容版本
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# 向量数据库
+pymilvus>=2.4.0
+
+# 关系数据库
+sqlalchemy>=2.0.23
+pymysql>=1.1.0
+cryptography>=42.0.0
+
+# OpenAI API
+openai>=1.12.0
+
+# 向量化模型
+sentence-transformers>=2.3.0
+
+# 数值计算（兼容性要求：unstructured 依赖需要 NumPy 1.x）
+numpy<2.0.0
+
+# 数据验证
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# 文件处理
+python-multipart>=0.0.9
+
+# 环境变量
+python-dotenv>=1.0.0
+
+# 文档处理
+markdown>=3.5.1
+
+# 文本处理
+langchain>=0.1.0
+langchain-text-splitters>=0.0.1
+
+# Agno框架 - 层级Markdown解析
+agno
+# Agno的MarkdownChunking依赖
+unstructured
+
+# HTTP请求
+requests>=2.31.0
