@@ -43,3 +43,4 @@ unstructured
 
 # HTTP请求
 requests>=2.31.0
+httpx>=0.25.0  # 异步HTTP客户端

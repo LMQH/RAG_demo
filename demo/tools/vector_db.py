@@ -9,23 +9,47 @@ from demo.config import settings
 
 logger = logging.getLogger(__name__)
 
+# 全局连接状态管理
+_connection_initialized = False
+_collection_loaded = {}
+
 
 class MilvusService:
-    """Milvus向量数据库服务"""
+    """Milvus向量数据库服务（优化连接复用）"""
     
     def __init__(self):
         self.collection_name = settings.MILVUS_COLLECTION_NAME
         self.dimension = settings.EMBEDDING_DIMENSION
+        self._collection_loaded = False  # 实例级别的加载状态
         self._connect()
         self._ensure_collection()
     
     def _connect(self):
-        """连接Milvus"""
-        connections.connect(
-            alias="default",
-            host=settings.MILVUS_HOST,
-            port=settings.MILVUS_PORT
-        )
+        """连接Milvus（复用连接）"""
+        global _connection_initialized
+        
+        # 检查连接是否已存在
+        try:
+            existing_connections = connections.list_connections()
+            if "default" in existing_connections:
+                logger.debug("复用现有Milvus连接")
+                _connection_initialized = True
+                return
+        except Exception:
+            pass
+        
+        # 创建新连接
+        try:
+            connections.connect(
+                alias="default",
+                host=settings.MILVUS_HOST,
+                port=settings.MILVUS_PORT
+            )
+            _connection_initialized = True
+            logger.info("Milvus连接已建立")
+        except Exception as e:
+            logger.error(f"Milvus连接失败: {str(e)}")
+            raise
     
     def _ensure_collection(self):
         """确保集合存在，不存在则创建"""
@@ -135,7 +159,7 @@ class MilvusService:
             self.collection.flush()
     
     def search(self, query_embedding: List[float], top_k: int = None) -> List[Dict]:
-        """向量检索"""
+        """向量检索（优化：避免重复load）"""
         if top_k is None:
             top_k = settings.TOP_K
         
@@ -144,11 +168,50 @@ class MilvusService:
                 f"查询向量维度({len(query_embedding)})与集合维度({self.dimension})不匹配"
             )
         
-        self.collection.load()
+        # 优化：只在必要时加载collection（避免重复load）
+        global _collection_loaded
+        collection_key = self.collection_name
+        
+        # 检查collection是否已加载（使用全局和实例状态）
+        if not self._collection_loaded or collection_key not in _collection_loaded:
+            try:
+                # 尝试获取collection状态，如果未加载会抛出异常
+                # 使用has_index()方法检查，这是更可靠的方式
+                if not self.collection.has_index():
+                    # 如果没有索引，说明collection可能未正确初始化
+                    logger.warning(f"Collection '{self.collection_name}' 没有索引，可能需要重新创建")
+                else:
+                    # 尝试访问num_entities来检查是否已加载
+                    try:
+                        _ = self.collection.num_entities
+                        # 如果能访问，说明已加载
+                        self._collection_loaded = True
+                        _collection_loaded[collection_key] = True
+                        logger.debug(f"Collection '{self.collection_name}' 已加载")
+                    except Exception:
+                        # 如果访问失败，需要加载
+                        self.collection.load()
+                        self._collection_loaded = True
+                        _collection_loaded[collection_key] = True
+                        logger.debug(f"Collection '{self.collection_name}' 已加载到内存")
+            except Exception as e:
+                # 如果检查过程出错，尝试加载
+                logger.warning(f"检查collection状态时出错: {str(e)}，尝试加载collection")
+                try:
+                    self.collection.load()
+                    self._collection_loaded = True
+                    _collection_loaded[collection_key] = True
+                    logger.debug(f"Collection '{self.collection_name}' 已加载到内存")
+                except Exception as load_error:
+                    logger.error(f"加载collection失败: {str(load_error)}")
+                    raise
+        
+        # 根据top_k动态调整nprobe（优化搜索性能）
+        nprobe = min(10, max(1, top_k * 2))  # nprobe范围：1-10
         
         search_params = {
             "metric_type": "L2",
-            "params": {"nprobe": 10}
+            "params": {"nprobe": nprobe}
         }
         
         results = self.collection.search(

@@ -2,6 +2,7 @@
 RAG检索工具
 """
 import json
+import asyncio
 from typing import List, Dict
 from demo.config import settings
 
@@ -101,6 +102,35 @@ class RAGService:
     
     @staticmethod
     def build_context(retrieved_docs: List[Dict]) -> str:
-        """构建上下文"""
+        """构建上下文（同步和异步共用）"""
         return build_rag_context(retrieved_docs)
+    
+    # ========== 异步方法 ==========
+    
+    @staticmethod
+    async def retrieve_async(query: str, top_k: int = None) -> List[Dict]:
+        """异步RAG检索：将查询向量化，然后检索相关文档"""
+        return await retrieve_documents_async(query, top_k)
+
+
+async def retrieve_documents_async(query: str, top_k: int = None) -> List[Dict]:
+    """异步从知识库中检索相关文档"""
+    if not query or not query.strip():
+        return []
+    
+    # 异步向量化查询
+    query_embedding = await _embedding_service.encode_single_async(query)
+    
+    if top_k is None:
+        top_k = settings.TOP_K
+    
+    # Milvus搜索是同步的，在线程池中执行
+    loop = asyncio.get_event_loop()
+    results = await loop.run_in_executor(
+        None,
+        _milvus_service.search,
+        query_embedding,
+        top_k
+    )
+    return results
 
